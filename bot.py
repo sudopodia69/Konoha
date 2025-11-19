@@ -1,42 +1,75 @@
 import discord
 import os
+import sys
 
-# Get token from environment
+# Get Discord token from environment variable
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# Simple client setup
-client = discord.Client(intents=discord.Intents.default())
+# Check if token exists
+if not TOKEN:
+    print('❌ ERROR: DISCORD_TOKEN environment variable not found!')
+    sys.exit(1)
+
+# Setup bot with minimal intents
+intents = discord.Intents.default()
+intents.message_content = True
+
+# Create bot client
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'✅ {client.user} is now online!')
-    print('Bot ready!')
+    """Bot startup event"""
+    print('='*50)
+    print(f'✅ Bot is now ONLINE!')
+    print(f'Bot Name: {client.user.name}')
+    print(f'Bot ID: {client.user.id}')
+    print('='*50)
+    print('Bot is ready to receive commands!')
 
 @client.event
 async def on_message(message):
-    # Ignore bot's own messages
+    """Handle incoming messages"""
+    
+    # Ignore messages from the bot itself
     if message.author == client.user:
         return
     
-    # Ping command
-    if message.content == '!ping':
-        await message.channel.send('🏓 Pong! Bot is working!')
+    # Ping command - Test if bot is responsive
+    if message.content.lower() == '!ping':
+        await message.channel.send('🏓 **Pong!** Bot is online and working!')
     
-    # Info command
-    if message.content == '!info':
-        await message.channel.send(f'🍃 Konoha Bot
-Server: {message.guild.name}
-Status: Online ✅')
+    # Info command - Show bot information
+    elif message.content.lower() == '!info':
+        embed = discord.Embed(
+            title='🍃 Konoha Bot',
+            description='Discord bot for community management',
+            color=0x00ff00
+        )
+        embed.add_field(name='Server', value=message.guild.name, inline=True)
+        embed.add_field(name='Members', value=message.guild.member_count, inline=True)
+        embed.add_field(name='Status', value='✅ Online', inline=True)
+        embed.set_footer(text=f'Requested by {message.author.name}')
+        await message.channel.send(embed=embed)
     
-    # Help command
-    if message.content == '!help':
-        await message.channel.send('**Commands:**
-!ping - Test bot
-!info - Bot info
-!help - This message')
+    # Help command - Show available commands
+    elif message.content.lower() == '!help':
+        help_text = """
+**📚 Available Commands:**
 
-# Run bot
-if TOKEN:
+`!ping` - Test if bot is online
+`!info` - Show bot and server information
+`!help` - Display this help message
+
+**Bot Prefix:** `!`
+**Status:** Online ✅
+        """
+        await message.channel.send(help_text)
+
+# Run the bot
+try:
+    print('Starting bot...')
     client.run(TOKEN)
-else:
-    print('❌ TOKEN not found!')
+except Exception as e:
+    print(f'❌ Error running bot: {e}')
+    sys.exit(1)
